@@ -1,0 +1,9 @@
+---
+
+- name: Install Neutron client
+  yum:
+    name: '{{ item }}'
+    state: present
+  with_items:
+    - python-neutronclient
+    - python-shade

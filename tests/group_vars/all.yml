@@ -1,0 +1,80 @@
+---
+
+mysql_databases:
+  - name: 'keystone'
+  - name: 'glance'
+  - name: 'neutron'
+  - name: 'nova'
+  - name: 'nova-api'
+mysql_users:
+  - name: 'keystone'
+    password: 'keystonepassword'
+    priv: 'keystone.*:ALL'
+    host: '%'
+  - name: 'glance'
+    password: 'glancepassword'
+    priv: 'glance.*:ALL'
+    host: '%'
+  - name: 'neutron'
+    password: 'neutronpassword'
+    priv: 'neutron.*:ALL'
+    host: '%'
+  - name: 'nova'
+    password: 'novapassword'
+    priv: 'nova.*:ALL'
+    host: '%'
+
+# Keystone
+openstack_keystone_admin_bind_host: 'localhost'
+openstack_keystone_bind_host: 'localhost'
+openstack_keystone_admin_token: 'os token'
+openstack_keystone_database_url: 'mysql+pymysql://keystone:keystonepassword@localhost/keystone'
+openstack_keystone_tenants:
+  - {name: 'admin', description: 'Admin tenant'}
+  - {name: 'service', description: 'Service tenant'}
+  - {name: 'demo', description: 'Demo tenant'}
+openstack_keystone_users:
+  - {name: 'admin', password: 'adminpassword', tenant: 'admin'}
+  - {name: 'demo', password: 'demopassword', tenant: 'demo'}
+  - {name: 'glance', password: 'glancepassword', tenant: 'service'}
+  - {name: 'neutron', password: 'neutronpassword', tenant: 'service'}
+  - {name: 'nova', password: 'novapassword', tenant: 'service'}
+openstack_keystone_roles:
+  - {name: 'admin', user: 'admin', tenant: 'admin'}
+  - {name: '_member_', user: 'demo', tenant: 'demo'}
+  - {name: 'admin', user: 'glance', tenant: 'service'}
+  - {name: 'admin', user: 'neutron', tenant: 'service'}
+  - {name: 'admin', user: 'nova', tenant: 'service'}
+openstack_keystone_services:
+  - {name: 'keystone', service_type: 'identity'}
+  - {name: 'glance', service_type: 'image'}
+  - {name: 'neutron', service_type: 'network'}
+  - {name: 'nova', service_type: 'compute'}
+openstack_keystone_endpoints:
+  - service_name: 'keystone'
+    public_url: 'http://localhost:5000/v3'
+    internal_url: 'http://localhost:5000/v3'
+    admin_url: 'http://localhost:35357/v3'
+  - service_name: 'glance'
+    public_url: 'http://localhost:9292/'
+    internal_url: 'http://localhost:9292/'
+    admin_url: 'http://localhost:9292/'
+  - service_name: 'nova'
+    public_url: 'http://localhost:8774/v2.1/%(tenant_id)s'
+    internal_url: 'http://localhost:8774/v2.1/%(tenant_id)s'
+    admin_url: 'http://localhost:8774/v2.1/%(tenant_id)s'
+  - service_name: 'neutron'
+    public_url: 'http://localhost:9696/'
+    internal_url: 'http://localhost:9696/'
+    admin_url: 'http://localhost:9696/'
+
+
+openstack_neutron_controller_neutron_database_url: 'mysql+pymysql://neutron:neutronpassword@localhost/neutron'
+openstack_neutron_controller_neutron_password: 'neutronpassword'
+openstack_neutron_controller_rabbit_hostname: 'localhost'
+openstack_neutron_controller_rabbit_username: 'guest'
+openstack_neutron_controller_rabbit_password: 'guest'
+openstack_neutron_controller_nova_password: 'novapassword'
+openstack_neutron_controller_demo_user: 'demo'
+openstack_neutron_controller_demo_pass: 'demopassword'
+openstack_neutron_controller_demo_project: 'demo'

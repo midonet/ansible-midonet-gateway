@@ -1,0 +1,36 @@
+---
+
+- name: Set keystone environment
+  set_fact:
+    keystone_env:
+     OS_USERNAME: '{{ midonet_gateway_keystone_username }}'
+     OS_TENANT_NAME: '{{ midonet_gateway_keystone_project }}'
+     OS_PASSWORD:  '{{ midonet_gateway_keystone_password }}'
+     OS_AUTH_URL: 'http://{{ midonet_gateway_keystone_hostname }}:{{ midonet_gateway_keystone_port }}/v3'
+     OS_PROJECT_DOMAIN_NAME: '{{ midonet_gateway_keystone_project_domain_name }}'
+     OS_USER_DOMAIN_NAME: '{{ midonet_gateway_keystone_user_domain_name }}'
+
+- name: Grab networks
+  command: neutron net-list
+  register: net_list
+  changed_when: False
+  environment: '{{ keystone_env }}'
+
+- name: Create external network
+  command: >
+    neutron net-create {{ midonet_gateway_external_network_name }}
+    --tenant_id {{ midonet_gateway_keystone_project }}
+    --shared --router:external
+  when: '"{{ midonet_gateway_external_network_name }}" not in net_list.stdout'
+  environment: '{{ keystone_env }}'
+
+- name: Grab subnets
+  command: neutron subnet-list
+  register: subnet_list
+  changed_when: False
+  environment: '{{ keystone_env }}'
+
+- name: Create external subnet
+  command: neutron subnet-create '{{ midonet_gateway_external_network_name  }}' '{{ midonet_gateway_fip_net }}' --name '{{ midonet_gateway_external_subnet_name }}'
+  when: '"{{ midonet_gateway_external_subnet_name }}" not in subnet_list.stdout'
+  environment: '{{ keystone_env }}'

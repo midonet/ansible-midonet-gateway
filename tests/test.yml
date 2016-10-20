@@ -1,0 +1,71 @@
+---
+
+- hosts: all 
+  remote_user: root
+  become: True
+  tasks:
+    - name: Install repo for Java 8 in Ubuntu 14.04
+      apt_repository: repo='ppa:openjdk-r/ppa'
+      when: "ansible_distribution_release == 'trusty'"
+
+- hosts: all 
+  remote_user: root
+  become: True
+  roles:
+    - role: geerlingguy.java
+      when: "ansible_os_family == 'Debian'"
+      java_packages:
+        - openjdk-8-jdk
+
+    - role: geerlingguy.java
+      when: "ansible_os_family == 'RedHat'"
+      java_packages:
+        - java-1.8.0-openjdk
+    - openstack-repo
+    - role: rabbitmq
+      rabbitmq_plugins:
+        - 'rabbitmq_management'
+      rabbitmq_tcp_address: '0.0.0.0'
+      rabbitmq_users:
+        - vhost: '/'
+          user: 'guest'
+          password: 'guest'
+
+    - role: mysql
+      mysql_root_password: 'mysqlpassword'
+      mysql_bind_address: 0.0.0.0
+      mysql_innodb_file_per_table: 'innodb_file_per_table'
+      mysql_daemon: 'mysql'
+      mysql_log_error: '/var/log/mysql/error.log'
+      mysql_pid_file: '/var/run/mysqld/mysqld.pid'
+      mysql_packages:
+        - mariadb-client
+        - mariadb-server
+        - python-mysqldb
+      when: ansible_os_family == 'Debian'
+
+    - role: mysql
+      mysql_root_password: 'mysqlpassword'
+      mysql_bind_address: 0.0.0.0
+      mysql_innodb_file_per_table: 'innodb_file_per_table'
+      mysql_daemon: 'mariadb'
+      mysql_log_error: '/var/log/mariadb/mariadb.log'
+      mysql_syslog_tag: 'mariadb'
+      mysql_pid_file: '/var/run/mariadb/mariadb.pid'
+      when: ansible_os_family == 'RedHat'
+
+    - role: openstack-keystone
+
+    - role: openstack-neutron-controller
+
+    - role: abelboldu.midonet-repos
+      midonet_version: current
+
+    - role: abelboldu.zookeeper
+      zookeeper_hosts: '{{ groups["gateway"] }}'
+
+    - role: ansible-midonet-agent
+      zookeeper_hosts: '{{ groups["gateway"] }}'
+      midonet_agent_max_heap_size: "1024M"
+
+    - role: ansible-midonet-gateway

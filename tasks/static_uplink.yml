@@ -1,0 +1,125 @@
+---
+
+# Task to set up a fake uplink with static routing on a gateway node
+# Edge Router is needed in order to create the uplink.
+# See:
+# https://docs.midonet.org/docs/latest-en/operations-guide/content/edge_router_setup.html
+
+- name: Grab ip link status
+  command: ip link
+  register: ip_link
+  changed_when: False
+
+- name: Create veth pair1
+  command: ip link add type veth
+  when:
+    - '"veth0" not in ip_link.stdout'
+    - '"veth1" not in ip_link.stdout'
+
+- name: Set veth0 of pair up
+  command: ip link set dev veth0 up
+  when:
+    - '"veth0" not in ip_link.stdout'
+    - '"veth1" not in ip_link.stdout'
+
+- name: Set veth1 of pair up
+  command: ip link set dev veth1 up
+  when:
+    - '"veth0" not in ip_link.stdout'
+    - '"veth1" not in ip_link.stdout'
+
+- name: Grab ip link status
+  command: ip link
+  register: ip_link
+  changed_when: False
+
+- name: Create uplink bridge
+  command: brctl addbr uplinkbridge
+  when:
+    - '"uplinkbridge" not in ip_link.stdout'
+
+- name: Grab bridge status
+  command: brctl show
+  register: brctl_show
+  changed_when: False
+
+- name: Attach veth0 to uplink bridge
+  command: brctl addif uplinkbridge veth0
+  when:
+    - '"veth0" not in brctl_show.stdout'
+
+- name: Grab ip link status
+  command: ip link
+  register: ip_link
+  changed_when: False
+
+- name: Add IP to veth0
+  command: ip addr add  {{ midonet_gateway_veth0_ip }} dev uplinkbridge
+  when:
+    - '"{{ midonet_gateway_veth0_ip }}" not in ip_link.stdout'
+
+- name: Set uplink bridge up
+  command: ip link set dev uplinkbridge up
+  when:
+    - '"{{ midonet_gateway_veth0_ip }}" not in ip_link.stdout'
+
+- name: Enable ip forwarding
+  sysctl:
+    name: 'net.ipv4.ip_forward'
+    value: 1
+    sysctl_set: True
+    state: present
+    reload: yes
+
+- name: Grab ip route status
+  command: ip route
+  register: ip_route
+  changed_when: False
+
+- name: Route packets towards floating IP network through the bridge
+  command: ip route add {{ midonet_gateway_fip_net }} via {{ midonet_gateway_veth1_ip }}
+  when:
+    - '"{{ midonet_gateway_fip_net }} via {{ midonet_gateway_veth1_ip }}" in ip_route.stdout'
+
+- name: Grab edge router id
+  shell: midonet-cli -A -e router list | grep {{ midonet_gateway_edge_router_name }} | awk '{ print $2 }'
+  register: edge_router_id
+
+- name: Grab host id
+  shell: midonet-cli -A -e host list | grep {{ ansible_hostname }} | awk '{ print $2 }'
+  register: host_id
+  changed_when: False
+
+- name: Grab veth port id
+  shell: midonet-cli -A -e host {{ host_id.stdout }} binding list | grep veth1 | awk '{ print $6 }'
+  register: edge_port_id
+  changed_when: False
+
+- name: Grab edge routes
+  command: midonet-cli -A -e router {{ edge_router_id.stdout }} route list
+  register: edge_routes
+  changed_when: False
+
+- name: Create a port on the edge router and bind it to the veth pair
+  command: |
+      midonet-cli -e router {{ edge_router_id.stdout }} add route src 0.0.0.0/0 dst 0.0.0.0/0 \
+      type normal port router {{ edge_router_id.stdout }} port {{ edge_port_id.stdout }} gw {{ midonet_gateway_veth0_ip }}
+  when:
+    - '"src 0.0.0.0/0 dst 0.0.0.0/0 gw {{ midonet_gateway_veth0_ip }}" not in edge_routes.stdout'
+
+- name: Add iptables masquerading to enable NATing
+  iptables:
+    state: present
+    name: 'midonet_uplink_masquerade'
+    table: 'nat'
+    chain: 'POSTROUTING'
+    policy: 'MASQUERADE'
+    out_interface: '{{ midonet_gateway_external_nic }}'
+    source: '{{ midonet_gateway_fip_net }}'
+# '-t nat -I POSTROUTING -o {{ midonet_gateway_external_nic }} -s {{ midonet_gateway_fip_net }} -j MASQUERADE'
+
+#- name: Add iptables forwarding
+#  iptables_raw:
+#    state: present
+#    name: midonet_uplink_forward
+#    rules: '-I FORWARD -s {{ midonet_gateway_fip_net }} -j ACCEPT'

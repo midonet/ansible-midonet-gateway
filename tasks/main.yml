@@ -1,0 +1,12 @@
+---
+
+- meta: flush_handlers
+- include: packages_redhat.yml
+  when: ansible_os_family == 'RedHat'
+- include: packages_debian.yml
+  when: ansible_os_family == 'Debian'
+- include: external-network.yml
+  when: midonet_gateway_create_external_network
+- include: edge-router.yml
+- include: static_uplink.yml
+#- include: bgp.yml
