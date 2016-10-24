@@ -103,7 +103,7 @@
 - name: Create a port on the edge router and bind it to the veth pair
   command: |
       midonet-cli -e router {{ edge_router_id.stdout }} add route src 0.0.0.0/0 dst 0.0.0.0/0 \
-      type normal port router {{ edge_router_id.stdout }} port {{ edge_port_id.stdout }} gw {{ midonet_gateway_veth0_ip }}
+      type normal port router {{ edge_router_id.stdout }} port {{ edge_port_id.stdout }} gw {{ midonet_gateway_veth0_ip | ipaddr('address') }}
   when:
     - '"src 0.0.0.0/0 dst 0.0.0.0/0 gw {{ midonet_gateway_veth0_ip }}" not in edge_routes.stdout'
 

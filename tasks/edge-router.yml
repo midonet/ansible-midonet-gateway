@@ -50,7 +50,8 @@
   command: >
     neutron port-create "{{ midonet_gateway_edge_network_name }}" --binding:host_id
     "{{ ansible_hostname }}" --binding:profile type=dict
-    interface_name="{{ midonet_gateway_external_nic }}" --fixed-ip ip_address="{{ midonet_gateway_veth0_ip }}"
+    interface_name="{{ midonet_gateway_external_nic }}" --fixed-ip ip_address="{{ midonet_gateway_veth1_ip  | ipaddr('address') }}"
+    --name "{{ midonet_gateway_edge_port_name }}"
   register: create_uplink_port
   environment: '{{ keystone_env }}'
 

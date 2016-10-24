@@ -7,3 +7,4 @@
   with_items:
     - python-neutronclient
     - python-shade
+    - bridge-utils

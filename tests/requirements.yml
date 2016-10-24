@@ -14,3 +14,7 @@
 - src: 'https://github.com/openstack-ansible-galaxy/openstack-keystone'
 
 - src: 'https://github.com/openstack-ansible-galaxy/openstack-neutron-controller'
+
+- src: 'https://github.com/midonet/ansible-midonet-agent'
+
+- src: 'https://github.com/midonet/ansible-midonet-cluster'

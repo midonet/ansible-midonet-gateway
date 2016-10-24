@@ -1,6 +1,6 @@
 ---
 
-- hosts: all 
+- hosts: all
   remote_user: root
   become: True
   tasks:
@@ -8,7 +8,7 @@
       apt_repository: repo='ppa:openjdk-r/ppa'
       when: "ansible_distribution_release == 'trusty'"
 
-- hosts: all 
+- hosts: all
   remote_user: root
   become: True
   roles:
@@ -22,6 +22,8 @@
       java_packages:
         - java-1.8.0-openjdk
     - openstack-repo
+    - role: abelboldu.midonet-repos
+      midonet_version: current
     - role: rabbitmq
       rabbitmq_plugins:
         - 'rabbitmq_management'
@@ -58,14 +60,17 @@
 
     - role: openstack-neutron-controller
 
-    - role: abelboldu.midonet-repos
-      midonet_version: current
-
     - role: abelboldu.zookeeper
       zookeeper_hosts: '{{ groups["gateway"] }}'
 
     - role: ansible-midonet-agent
       zookeeper_hosts: '{{ groups["gateway"] }}'
-      midonet_agent_max_heap_size: "1024M"
+      midonet_agent_max_heap_size: "512M"
+
+    - role: ansible-midonet-cluster
+      zookeeper_hosts: '{{ groups["gateway"] }}'
+      cassandra_hosts: '{{ groups["gateway"] }}'
+      midonet_cluster_max_heap_size: "512M"
 
     - role: ansible-midonet-gateway
+      midonet_gateway_external_nic: 'veth1'
