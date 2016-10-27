@@ -1,8 +1,5 @@
 ---
 
-# with module:
-# neutron router-create <EDGE_ROUTER_NAME>
-# neutron router-interface-add <EDGE_ROUTER_ID> <EXT_SUBNET_ID>
 - name: Set keystone environment
   set_fact:
     keystone_env:

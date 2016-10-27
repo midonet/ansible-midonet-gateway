@@ -28,9 +28,6 @@ def start(config, name, box_libvirt, box_virtualbox, extra_provisioners=[])
       }
     end
 
-    node.vm.provision :ansible do |ansible|
-      ansible.playbook = "test.yml"
-    end
   end
 end
 

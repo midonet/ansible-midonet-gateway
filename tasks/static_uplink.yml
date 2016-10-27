@@ -102,24 +102,32 @@
 
 - name: Create a port on the edge router and bind it to the veth pair
   command: |
-      midonet-cli -e router {{ edge_router_id.stdout }} add route src 0.0.0.0/0 dst 0.0.0.0/0 \
-      type normal port router {{ edge_router_id.stdout }} port {{ edge_port_id.stdout }} gw {{ midonet_gateway_veth0_ip | ipaddr('address') }}
+    midonet-cli -e router {{ edge_router_id.stdout }} add route src 0.0.0.0/0 dst 0.0.0.0/0 \
+    type normal port router {{ edge_router_id.stdout }} port {{ edge_port_id.stdout }} gw {{ midonet_gateway_veth0_ip | ipaddr('address') }}
   when:
     - '"src 0.0.0.0/0 dst 0.0.0.0/0 gw {{ midonet_gateway_veth0_ip }}" not in edge_routes.stdout'
 
-- name: Add iptables masquerading to enable NATing
-  iptables:
-    state: present
-    name: 'midonet_uplink_masquerade'
-    table: 'nat'
-    chain: 'POSTROUTING'
-    policy: 'MASQUERADE'
-    out_interface: '{{ midonet_gateway_external_nic }}'
-    source: '{{ midonet_gateway_fip_net }}'
-# '-t nat -I POSTROUTING -o {{ midonet_gateway_external_nic }} -s {{ midonet_gateway_fip_net }} -j MASQUERADE'
+- name: Grab iptables NAT table
+  command: iptables -L -t nat
+  register: iptables_nat
+  changed_when: False
 
-#- name: Add iptables forwarding
-#  iptables_raw:
-#    state: present
-#    name: midonet_uplink_forward
-#    rules: '-I FORWARD -s {{ midonet_gateway_fip_net }} -j ACCEPT'
+- name: Add iptables masquerading to enable NATing
+  command: |
+    iptables -t nat -I POSTROUTING -o {{ midonet_gateway_external_nic }} \
+    -s {{ midonet_gateway_fip_net }} -j MASQUERADE \
+    -m comment --comment 'midonet_uplink_masquerade'
+  when:
+    - '"midonet_uplink_masquerade" not in iptables_nat.stdout'
+
+- name: Grab iptables filters
+  command: iptables -L
+  register: iptables_filters
+  changed_when: False
+
+- name: Add iptables forwarding
+  command: |
+    iptables -I FORWARD -s {{ midonet_gateway_fip_net }} -j ACCEPT \
+    -m comment --comment 'midonet_uplink_forward'
+  when:
+    - '"midonet_uplink_forward" not in iptables_filters.stdout'
