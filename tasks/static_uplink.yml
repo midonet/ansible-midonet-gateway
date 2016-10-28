@@ -79,7 +79,7 @@
 - name: Route packets towards floating IP network through the bridge
   command: ip route add {{ midonet_gateway_fip_net }} via {{ midonet_gateway_veth1_ip }}
   when:
-    - '"{{ midonet_gateway_fip_net }} via {{ midonet_gateway_veth1_ip }}" in ip_route.stdout'
+    - '"{{ midonet_gateway_fip_net }} via {{ midonet_gateway_veth1_ip }}" not in ip_route.stdout'
 
 - name: Grab edge router id
   shell: midonet-cli -A -e router list | grep {{ midonet_gateway_edge_router_name }} | awk '{ print $2 }'
