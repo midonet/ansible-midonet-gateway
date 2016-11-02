@@ -20,7 +20,7 @@
   command: >
     neutron net-create {{ midonet_gateway_external_network_name }}
     --tenant_id {{ midonet_gateway_keystone_project }}
-    --shared --router:external
+    --shared --router:external True
   when: '"{{ midonet_gateway_external_network_name }}" not in net_list.stdout'
   environment: '{{ keystone_env }}'
 
@@ -31,6 +31,10 @@
   environment: '{{ keystone_env }}'
 
 - name: Create external subnet
-  command: neutron subnet-create '{{ midonet_gateway_external_network_name  }}' '{{ midonet_gateway_fip_net }}' --name '{{ midonet_gateway_external_subnet_name }}'
+  command: >
+    neutron subnet-create '{{ midonet_gateway_external_network_name  }}'
+    '{{ midonet_gateway_fip_net }}' --name '{{ midonet_gateway_external_subnet_name }}'
+    --allocation-pool start='{{ midonet_gateway_external_subnet_pool_start }}',end='{{ midonet_gateway_external_subnet_pool_end }}'
+    --disable-dhcp --gateway '{{ midonet_gateway_external_subnet_gw }}'
   when: '"{{ midonet_gateway_external_subnet_name }}" not in subnet_list.stdout'
   environment: '{{ keystone_env }}'
