@@ -77,7 +77,7 @@
   changed_when: False
 
 - name: Route packets towards floating IP network through the bridge
-  command: ip route add {{ midonet_gateway_fip_net }} via {{ midonet_gateway_veth1_ip }}
+  command: ip route add {{ midonet_gateway_fip_net }} via {{ midonet_gateway_veth1_ip | ipaddr('address') }}
   when:
     - '"{{ midonet_gateway_fip_net }} via {{ midonet_gateway_veth1_ip }}" not in ip_route.stdout'
 
