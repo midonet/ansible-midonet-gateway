@@ -48,20 +48,20 @@
   when:
     - '"veth0" not in brctl_show.stdout'
 
-- name: Grab ip link status
-  command: ip link
-  register: ip_link
+- name: Grab ip addr status
+  command: ip addr
+  register: ip_addr
   changed_when: False
 
 - name: Add IP to veth0
   command: ip addr add  {{ midonet_gateway_veth0_ip }} dev uplinkbridge
   when:
-    - '"{{ midonet_gateway_veth0_ip }}" not in ip_link.stdout'
+    - '"{{ midonet_gateway_veth0_ip }}" not in ip_addr.stdout'
 
 - name: Set uplink bridge up
   command: ip link set dev uplinkbridge up
   when:
-    - '"{{ midonet_gateway_veth0_ip }}" not in ip_link.stdout'
+    - '"{{ midonet_gateway_veth0_ip }}" not in ip_addr.stdout'
 
 - name: Enable ip forwarding
   sysctl:
