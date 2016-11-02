@@ -9,6 +9,7 @@ midonet_gateway_keystone_user_domain_name: 'default'
 midonet_gateway_keystone_port: 35357
 midonet_gateway_neutron_port: 9696
 midonet_gateway_api_endpoint: 'http://127.0.0.1:8181/midonet-api'
+midonet_gateway_uplink_nic: 'veth1'
 midonet_gateway_external_nic: '{{ ansible_default_ipv4.interface }}'
 midonet_gateway_create_external_network: True
 midonet_gateway_external_network_name: 'ext-net'
