@@ -24,6 +24,7 @@
     - openstack-repo
     - role: abelboldu.midonet-repos
       midonet_version: current
+      openstack_version: mitaka
     - role: rabbitmq
       rabbitmq_plugins:
         - 'rabbitmq_management'

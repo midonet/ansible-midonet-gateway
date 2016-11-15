@@ -1,15 +1,5 @@
 ---
 
-- name: Set keystone environment
-  set_fact:
-    keystone_env:
-     OS_USERNAME: '{{ midonet_gateway_keystone_username }}'
-     OS_TENANT_NAME: '{{ midonet_gateway_keystone_project }}'
-     OS_PASSWORD:  '{{ midonet_gateway_keystone_password }}'
-     OS_AUTH_URL: 'http://{{ midonet_gateway_keystone_hostname }}:{{ midonet_gateway_keystone_port }}/v3'
-     OS_PROJECT_DOMAIN_NAME: '{{ midonet_gateway_keystone_project_domain_name }}'
-     OS_USER_DOMAIN_NAME: '{{ midonet_gateway_keystone_user_domain_name }}'
-
 - name: Grab routers
   command: neutron router-list
   register: router_list
@@ -64,7 +54,9 @@
     interface_name="{{ midonet_gateway_uplink_nic }}" --fixed-ip ip_address="{{ midonet_gateway_veth1_ip  | ipaddr('address') }}"
     --name "{{ midonet_gateway_edge_port_name }}"
   register: create_uplink_port
-  when: '"{{ midonet_gateway_edge_port_name }}" not in port_list.stdout'
+  when:
+    - '"{{ midonet_gateway_edge_port_name }}" not in port_list.stdout'
+    - not midonet_gateway_bgp
   environment: '{{ keystone_env }}'
 
 - name: Add interface to router

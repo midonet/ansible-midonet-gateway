@@ -1,15 +1,5 @@
 ---
 
-- name: Set keystone environment
-  set_fact:
-    keystone_env:
-     OS_USERNAME: '{{ midonet_gateway_keystone_username }}'
-     OS_TENANT_NAME: '{{ midonet_gateway_keystone_project }}'
-     OS_PASSWORD:  '{{ midonet_gateway_keystone_password }}'
-     OS_AUTH_URL: 'http://{{ midonet_gateway_keystone_hostname }}:{{ midonet_gateway_keystone_port }}/v3'
-     OS_PROJECT_DOMAIN_NAME: '{{ midonet_gateway_keystone_project_domain_name }}'
-     OS_USER_DOMAIN_NAME: '{{ midonet_gateway_keystone_user_domain_name }}'
-
 - name: Grab networks
   command: neutron net-list
   register: net_list

@@ -39,19 +39,19 @@ openstack_keystone_users:
   - {name: 'glance', password: 'glancepassword', tenant: 'service'}
   - {name: 'neutron', password: 'neutronpassword', tenant: 'service'}
   - {name: 'nova', password: 'novapassword', tenant: 'service'}
-  - { name: midonet, password: 'midonetpassword', tenant: service }
+  - {name: midonet, password: 'midonetpassword', tenant: service }
 openstack_keystone_roles:
   - {name: 'admin', user: 'admin', tenant: 'admin'}
   - {name: '_member_', user: 'demo', tenant: 'demo'}
   - {name: 'admin', user: 'glance', tenant: 'service'}
   - {name: 'admin', user: 'neutron', tenant: 'service'}
   - {name: 'admin', user: 'nova', tenant: 'service'}
-  - { name: admin, user: midonet, tenant: service  }
+  - {name: admin, user: midonet, tenant: service  }
 openstack_keystone_services:
   - {name: 'keystone', service_type: 'identity'}
   - {name: 'glance', service_type: 'image'}
   - {name: 'neutron', service_type: 'network'}
-  - { name: midonet, service_type: network }
+  - {name: midonet, service_type: network }
   - {name: 'nova', service_type: 'compute'}
 openstack_keystone_endpoints:
   - service_name: 'keystone'
@@ -94,3 +94,12 @@ midonet_cluster_keystone_project: 'service'
 midonet_agent_cluster_password: 'midonetpassword'
 midonet_agent_cluster_username: 'midonet'
 midonet_agent_cluster_project: 'service'
+
+midonet_gateway_bgp: True
+midonet_gateway_bgp_peers:
+  - name: Peer1
+    ip: 200.200.200.2
+    remote_as: 4001
+  - name: Peer2
+    ip: 200.200.200.3
+    remote_as: 4002

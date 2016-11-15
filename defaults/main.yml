@@ -26,3 +26,9 @@ midonet_gateway_veth_network: '172.19.0.0/30'
 midonet_gateway_veth0_ip: '{{ midonet_gateway_veth_network | ipaddr("net") | ipaddr("1") }}'
 midonet_gateway_veth1_ip: '{{ midonet_gateway_veth_network | ipaddr("net") | ipaddr("2") }}'
 midonet_gateway_veth_prefix: '{{ midonet_gateway_veth_network | ipaddr("host/prefix") | ipaddr("prefix") }}'
+midonet_gateway_bgp: False
+midonet_gateway_bgp_speaker_name: 'BGP-Speaker'
+midonet_gateway_bgp_speaker_local_as: 4000
+midonet_gateway_bgp_router: ''
+
+midonet_gateway_bgp_peers: []

@@ -1,0 +1,54 @@
+---
+
+- name: Grab BGP Speakers
+  command: neutron bgp-speaker-list
+  register: bgp_speaker_list
+  environment: '{{ keystone_env }}'
+  changed_when: False
+
+- name: Grab edge-router data
+  command:  neutron router-show '{{ midonet_gateway_edge_router_name }}' -f json
+  register: edge_router_json
+  environment: '{{ keystone_env }}'
+  changed_when: False
+
+- set_fact:
+    edge_router: '{{ edge_router_json.stdout | from_json }}'
+
+- name: Create BGP Speaker associated with edge router
+  command: >
+    neutron bgp-speaker-create
+    --tenant-id admin
+    --local-as '{{ midonet_gateway_bgp_speaker_local_as }}'
+    --ip-version 4 '{{ midonet_gateway_bgp_speaker_name }}'
+    --logical-router '{{ edge_router.id }}'
+  when: '"{{ midonet_gateway_bgp_speaker_name }}" not in bgp_speaker_list.stdout'
+  environment: '{{ keystone_env }}'
+
+- name: Grab BGP Peers
+  command: neutron bgp-peer-list
+  register: bgp_peer_list
+  environment: '{{ keystone_env }}'
+
+- debug:
+    var: midonet_gateway_bgp_peers
+
+- name: Create BGP Peers
+  command: >
+    neutron bgp-peer-create '{{ item.name }}'
+    --peer-ip '{{ item.ip }}'
+    --remote-as '{{ item.remote_as }}'
+    --auth-type '{{ item.auth_type | default("none") }}'
+    --password '{{ item.password | default("") }}'
+  with_items: '{{ midonet_gateway_bgp_peers }}'
+  when: '"{{ item.name }}" not in bgp_peer_list.stdout'
+  environment: '{{ keystone_env }}'
+
+- name: Add BGP Peers to Speaker
+  command: >
+    neutron bgp-speaker-peer-add
+    '{{ midonet_gateway_bgp_speaker_name }}'
+    '{{ item.name }}'
+  with_items: '{{ midonet_gateway_bgp_peers }}'
+  when: '"{{ item.name }}" not in bgp_peer_list.stdout'
+  environment: '{{ keystone_env }}'
