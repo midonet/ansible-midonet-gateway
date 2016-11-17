@@ -10,7 +10,6 @@ midonet_gateway_keystone_port: 35357
 midonet_gateway_neutron_port: 9696
 midonet_gateway_api_endpoint: 'http://127.0.0.1:8181/midonet-api'
 midonet_gateway_external_nic: '{{ ansible_default_ipv4.interface }}'
-midonet_gateway_uplink_nic: 'veth1'
 midonet_gateway_create_external_network: True
 midonet_gateway_external_network_name: 'ext-net'
 midonet_gateway_external_subnet_name: 'ext-subnet'
@@ -22,10 +21,13 @@ midonet_gateway_edge_network_name: 'net-edge1-gw1'
 midonet_gateway_edge_subnet_name: 'subnet-edge1-gw1'
 midonet_gateway_edge_port_name: 'port-edge1-gw1'
 midonet_gateway_fip_net: '200.200.200.0/24'
-midonet_gateway_veth_network: '172.19.0.0/30'
-midonet_gateway_veth0_ip: '{{ midonet_gateway_veth_network | ipaddr("net") | ipaddr("1") }}'
-midonet_gateway_veth1_ip: '{{ midonet_gateway_veth_network | ipaddr("net") | ipaddr("2") }}'
-midonet_gateway_veth_prefix: '{{ midonet_gateway_veth_network | ipaddr("host/prefix") | ipaddr("prefix") }}'
+midonet_gateway_uplinks:
+  - iface: 'veth1'
+    ip: '{{ midonet_gateway_veth1_ip  | ipaddr("address")  }}'
+midonet_gateway_uplink_network: '172.19.0.0/30'
+midonet_gateway_veth0_ip: '{{ midonet_gateway_uplink_network | ipaddr("net") | ipaddr("1") }}'
+midonet_gateway_veth1_ip: '{{ midonet_gateway_uplink_network | ipaddr("net") | ipaddr("2") }}'
+midonet_gateway_veth_prefix: '{{ midonet_gateway_uplink_network | ipaddr("host/prefix") | ipaddr("prefix") }}'
 midonet_gateway_bgp: False
 midonet_gateway_bgp_speaker_name: 'BGP-Speaker'
 midonet_gateway_bgp_speaker_local_as: 4000
