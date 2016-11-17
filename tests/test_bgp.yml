@@ -74,3 +74,15 @@
       midonet_cluster_max_heap_size: "512M"
 
     - role: ansible-midonet-gateway
+      midonet_gateway_bgp: True
+      midonet_gateway_uplink_network: '10.88.88.0/24'
+      midonet_gateway_uplinks:
+        - iface: 'eth1'
+          ip: '10.88.88.1'
+      midonet_gateway_bgp_peers:
+        - name: 'Peer1'
+          ip: '10.88.88.2'
+          remote_as: 4001
+        - name: 'Peer2'
+          ip: '10.88.88.3'
+          remote_as: 4002
