@@ -11,20 +11,29 @@
   when: '"{{ midonet_gateway_edge_router_name }}" not in router_list.stdout'
   environment: '{{ keystone_env }}'
 
-- name: Add router interface
-  command: neutron router-interface-add '{{ midonet_gateway_edge_router_name }}' '{{ midonet_gateway_external_subnet_name }}'
-  when: '"{{ midonet_gateway_edge_router_name }}" not in router_list.stdout'
-  environment: '{{ keystone_env }}'
-
 - name: Grab networks
   command: neutron net-list
   register: net_list
   changed_when: False
   environment: '{{ keystone_env }}'
 
+- name: Create edge network as uplink type
+  command: >
+    neutron net-create {{ midonet_gateway_edge_network_name }}
+    --tenant_id {{ midonet_gateway_keystone_project }}
+    --provider:network_type uplink
+  when:
+    - '"{{ midonet_gateway_edge_network_name }}" not in net_list.stdout'
+    - not midonet_gateway_bgp
+  environment: '{{ keystone_env }}'
+
 - name: Create edge network
-  command: neutron net-create {{ midonet_gateway_edge_network_name }} --tenant_id {{ midonet_gateway_keystone_project }} --provider:network_type uplink
-  when: '"{{ midonet_gateway_edge_network_name }}" not in net_list.stdout'
+  command: >
+    neutron net-create {{ midonet_gateway_edge_network_name }}
+    --tenant_id {{ midonet_gateway_keystone_project }} 
+  when:
+    - '"{{ midonet_gateway_edge_network_name }}" not in net_list.stdout'
+    - midonet_gateway_bgp
   environment: '{{ keystone_env }}'
 
 - name: Grab subnets
@@ -36,7 +45,7 @@
 - name: Create edge subnet
   command: >
     neutron subnet-create  '{{ midonet_gateway_edge_network_name  }}'
-    '{{ midonet_gateway_veth_network }}' --name  '{{ midonet_gateway_edge_subnet_name }}'
+    '{{ midonet_gateway_uplink_network }}' --name  '{{ midonet_gateway_edge_subnet_name }}'
     --disable-dhcp
   when: '"{{ midonet_gateway_edge_subnet_name }}" not in subnet_list.stdout'
   environment: '{{ keystone_env }}'
@@ -49,17 +58,22 @@
 
 - name: Create uplink port
   command: >
-    neutron port-create "{{ midonet_gateway_edge_network_name }}" --binding:host_id
-    "{{ ansible_hostname }}" --binding:profile type=dict
-    interface_name="{{ midonet_gateway_uplink_nic }}" --fixed-ip ip_address="{{ midonet_gateway_veth1_ip  | ipaddr('address') }}"
+    neutron port-create '{{ midonet_gateway_edge_network_name }}' --binding:host_id
+    '{{ ansible_hostname }}' --binding:profile type=dict
+    interface_name='{{ item.iface }}' --fixed-ip ip_address='{{ item.ip }}'
     --name "{{ midonet_gateway_edge_port_name }}"
   register: create_uplink_port
+  with_items: '{{ midonet_gateway_uplinks }}'
   when:
     - '"{{ midonet_gateway_edge_port_name }}" not in port_list.stdout'
-    - not midonet_gateway_bgp
   environment: '{{ keystone_env }}'
 
 - name: Add interface to router
   command: neutron router-interface-add {{ midonet_gateway_edge_router_name }} port={{ midonet_gateway_edge_port_name }}
   when: create_uplink_port.changed
+  environment: '{{ keystone_env }}'
+
+- name: Add router to external subnet
+  command: neutron router-interface-add '{{ midonet_gateway_edge_router_name }}' '{{ midonet_gateway_external_subnet_name }}'
+  when: '"{{ midonet_gateway_edge_router_name }}" not in router_list.stdout'
   environment: '{{ keystone_env }}'
