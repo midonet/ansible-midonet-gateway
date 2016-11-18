@@ -21,8 +21,13 @@ def start(config, name, box_libvirt, box_virtualbox, extra_provisioners=[])
       end
     end
 
+    # Extra interface for the uplink (unconfigured)
+    # Using .10 to avoid warnings
+    node.vm.network "private_network", ip: "10.88.88.10",
+      auto_config: false
+
     node.vm.provision :ansible do |ansible|
-      ansible.playbook = "test.yml"
+      ansible.playbook = "test_bgp.yml"
       ansible.groups = {
           "gateway" => [name]
       }
