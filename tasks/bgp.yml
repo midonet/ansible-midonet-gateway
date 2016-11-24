@@ -1,12 +1,12 @@
 ---
 
 - name: Grab edge-router
-  command: midonet-cli -e router list | grep '{{ midonet_gateway_edge_router_name }}'
+  shell: midonet-cli -e router list | grep '{{ midonet_gateway_edge_router_name }}'
   register: edge_router
   changed_when: False
 
 - set_fact:
-    edge_router_id: edge_router.stdout.split(' ')[1]
+    edge_router_id: '{{ edge_router.stdout.split(" ")[1] }}'
 
 - name: Set router AS number
   command: midonet-cli -e router '{{ edge_router_id }}' set asn '{{ midonet_gateway_bgp_local_as }}'
@@ -23,8 +23,23 @@
   when: '"{{ item.ip }}" not in bgp_peer_list.stdout'
   register: add_bgp_peers
 
+- name: Grab edge port
+  shell: midonet-cli -e router '{{ edge_router_id }}' port list | grep '{{ item.ip }}'
+  with_items: '{{ midonet_gateway_uplinks }}'
+  changed_when: False
+  register: edge_ports
+
+- debug: msg='{{ edge_ports }}'
+
+- set_fact:
+    edge_port_ids: '{{ item.stdout.split(" ")[1] }}'
+  with_items: '{{ edge_ports.results }}'
+
+- debug: msg='{{ edge_port_ids }}'
+
 - name: Add default route to peers
-  command: midonet-cli -e router '{{ edge_router_id }}' route add src 0.0.0.0/0 dst '{{ midonet_gateway_uplink_network }}' port '{{ edge_port_id }}'
+  command: midonet-cli -e router '{{ edge_router_id }}' route add src 0.0.0.0/0 dst '{{ midonet_gateway_uplink_network }}' port '{{ item }}' type normal
+  with_items: '{{ edge_port_ids }}'
   when: add_bgp_peers.changed
 
 - name: Grab BGP routes
