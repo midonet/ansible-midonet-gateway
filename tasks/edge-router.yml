@@ -24,16 +24,6 @@
     --provider:network_type uplink
   when:
     - '"{{ midonet_gateway_edge_network_name }}" not in net_list.stdout'
-    - not midonet_gateway_bgp
-  environment: '{{ keystone_env }}'
-
-- name: Create edge network
-  command: >
-    neutron net-create {{ midonet_gateway_edge_network_name }}
-    --tenant_id {{ midonet_gateway_keystone_project }}
-  when:
-    - '"{{ midonet_gateway_edge_network_name }}" not in net_list.stdout'
-    - midonet_gateway_bgp
   environment: '{{ keystone_env }}'
 
 - name: Grab subnets
