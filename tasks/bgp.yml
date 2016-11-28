@@ -29,13 +29,9 @@
   changed_when: False
   register: edge_ports
 
-- debug: msg='{{ edge_ports }}'
-
 - set_fact:
     edge_port_ids: '{{ item.stdout.split(" ")[1] }}'
   with_items: '{{ edge_ports.results }}'
-
-- debug: msg='{{ edge_port_ids }}'
 
 - name: Add default route to peers
   command: midonet-cli -e router '{{ edge_router_id }}' route add src 0.0.0.0/0 dst '{{ midonet_gateway_uplink_network }}' port '{{ item }}' type normal
