@@ -48,5 +48,5 @@
   register: bgp_peer_list
 
 - name: Advertise BGP routes
-  command:  midonet-cli -e router '{{ edge_router_id }}' add bgp-network net '{{ midonet_gateway_fip_net }}'
-  when: '"net {{ midonet_gateway_fip_net }}" not in bgp_peer_list.stdout'
+  command:  midonet-cli -e router '{{ edge_router_id }}' add bgp-network net '{{ midonet_gateway_external_network_cidr }}'
+  when: '"net {{ midonet_gateway_external_network_cidr }}" not in bgp_peer_list.stdout'

@@ -35,7 +35,7 @@
 - name: Create edge subnet
   command: >
     neutron subnet-create  '{{ midonet_gateway_edge_network_name  }}'
-    '{{ midonet_gateway_uplink_network }}' --name  '{{ midonet_gateway_edge_subnet_name }}'
+    '{{ midonet_gateway_uplink_network_cidr }}' --name  '{{ midonet_gateway_edge_subnet_name }}'
     --disable-dhcp
   when: '"{{ midonet_gateway_edge_subnet_name }}" not in subnet_list.stdout'
   environment: '{{ keystone_env }}'
