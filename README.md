@@ -53,7 +53,7 @@ BGP setup:
     roles:
       - role: midonet.midonet-gateway
       midonet_gateway_bgp: True
-      midonet_gateway_uplink_network: '10.88.88.0/24'
+      midonet_gateway_uplink_network_cidr: '10.88.88.0/24'
       midonet_gateway_uplinks:
         - iface: 'eth1'
           ip: '10.88.88.1'

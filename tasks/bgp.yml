@@ -1,54 +1,48 @@
 ---
 
-- name: Grab BGP Speakers
-  command: neutron bgp-speaker-list
-  register: bgp_speaker_list
-  environment: '{{ keystone_env }}'
-  changed_when: False
-
-- name: Grab edge-router data
-  command:  neutron router-show '{{ midonet_gateway_edge_router_name }}' -f json
-  register: edge_router_json
-  environment: '{{ keystone_env }}'
+- name: Grab edge-router
+  shell: midonet-cli -e router list | grep '{{ midonet_gateway_edge_router_name }}'
+  register: edge_router
   changed_when: False
 
 - set_fact:
-    edge_router: '{{ edge_router_json.stdout | from_json }}'
+    edge_router_id: '{{ edge_router.stdout.split(" ")[1] }}'
 
-- name: Create BGP Speaker associated with edge router
-  command: >
-    neutron bgp-speaker-create
-    --tenant-id admin
-    --local-as '{{ midonet_gateway_bgp_speaker_local_as }}'
-    --ip-version 4 '{{ midonet_gateway_bgp_speaker_name }}'
-    --logical-router '{{ edge_router.id }}'
-  when: '"{{ midonet_gateway_bgp_speaker_name }}" not in bgp_speaker_list.stdout'
-  environment: '{{ keystone_env }}'
+- name: Set router AS number
+  command: midonet-cli -e router '{{ edge_router_id }}' set asn '{{ midonet_gateway_bgp_local_as }}'
+  when: '"asn {{ midonet_gateway_bgp_local_as }}" not in edge_router.stdout'
 
-- name: Grab BGP Peers
-  command: neutron bgp-peer-list
+- name: Grab bgp peers from edge router
+  command: midonet-cli -e router '{{ edge_router_id }}' list bgp-peer
+  changed_when: False
   register: bgp_peer_list
-  environment: '{{ keystone_env }}'
 
-- debug:
-    var: midonet_gateway_bgp_peers
-
-- name: Create BGP Peers
-  command: >
-    neutron bgp-peer-create '{{ item.name }}'
-    --peer-ip '{{ item.ip }}'
-    --remote-as '{{ item.remote_as }}'
-    --auth-type '{{ item.auth_type | default("none") }}'
-    --password '{{ item.password | default("") }}'
+- name: Add BGP peers to edge router
+  command: midonet-cli -e router '{{ edge_router_id }}' add bgp-peer asn '{{ item.remote_as }}' address '{{ item.ip }}'
   with_items: '{{ midonet_gateway_bgp_peers }}'
-  when: '"{{ item.name }}" not in bgp_peer_list.stdout'
-  environment: '{{ keystone_env }}'
+  when: '"{{ item.ip }}" not in bgp_peer_list.stdout'
+  register: add_bgp_peers
 
-- name: Add BGP Peers to Speaker
-  command: >
-    neutron bgp-speaker-peer-add
-    '{{ midonet_gateway_bgp_speaker_name }}'
-    '{{ item.name }}'
-  with_items: '{{ midonet_gateway_bgp_peers }}'
-  when: '"{{ item.name }}" not in bgp_peer_list.stdout'
-  environment: '{{ keystone_env }}'
+- name: Grab edge port
+  shell: midonet-cli -e router '{{ edge_router_id }}' port list | grep '{{ item.ip }}'
+  with_items: '{{ midonet_gateway_uplinks }}'
+  changed_when: False
+  register: edge_ports
+
+- set_fact:
+    edge_port_ids: '{{ item.stdout.split(" ")[1] }}'
+  with_items: '{{ edge_ports.results }}'
+
+- name: Add default route to peers
+  command: midonet-cli -e router '{{ edge_router_id }}' route add src 0.0.0.0/0 dst '{{ midonet_gateway_uplink_network }}' port '{{ item }}' type normal
+  with_items: '{{ edge_port_ids }}'
+  when: add_bgp_peers.changed
+
+- name: Grab BGP routes
+  command: midonet-cli -e router '{{ edge_router_id }}' list bgp-network
+  changed_when: False
+  register: bgp_peer_list
+
+- name: Advertise BGP routes
+  command:  midonet-cli -e router '{{ edge_router_id }}' add bgp-network net '{{ midonet_gateway_external_network_cidr }}'
+  when: '"net {{ midonet_gateway_external_network_cidr }}" not in bgp_peer_list.stdout'
