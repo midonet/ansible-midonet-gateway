@@ -31,5 +31,5 @@ midonet_gateway_veth1_ip: '{{ midonet_gateway_uplink_network | ipaddr("net") | i
 midonet_gateway_veth_prefix: '{{ midonet_gateway_uplink_network | ipaddr("host/prefix") | ipaddr("prefix") }}'
 midonet_gateway_bgp: False
 midonet_gateway_bgp_speaker_name: 'BGP-Speaker'
-midonet_gateway_bgp_local_as: 4000
+midonet_gateway_bgp_local_as: 64512
 midonet_gateway_bgp_peers: []
