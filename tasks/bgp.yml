@@ -34,7 +34,7 @@
   with_items: '{{ edge_ports.results }}'
 
 - name: Add default route to peers
-  command: midonet-cli -e router '{{ edge_router_id }}' route add src 0.0.0.0/0 dst '{{ midonet_gateway_uplink_network }}' port '{{ item }}' type normal
+  command: midonet-cli -e router '{{ edge_router_id }}' route add src 0.0.0.0/0 dst '{{ midonet_gateway_uplink_network_cidr }}' port '{{ item }}' type normal
   with_items: '{{ edge_port_ids }}'
   when: add_bgp_peers.changed
 
